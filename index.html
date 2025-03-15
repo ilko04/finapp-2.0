@@ -2,13 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Финансовый калькулятор</title>
-    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Финансовый калькулятор">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192x192.png">
+    <link rel="icon" href="assets/icon-192x192.png" sizes="192x192">
+    <link rel="icon" href="assets/icon-512x512.png" sizes="512x512">
+    <link rel="manifest" href="manifest.json">
+    <title>Финансовый калькулятор</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,39 +57,25 @@
             line-height: 1.6;
             white-space: pre-wrap;
         }
+        .settings-container {
+            display: none;
+        }
         .menu {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
-        }
-        .input-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .input-row input {
-            width: 48%;
-        }
-        .input-row button {
-            margin-left: 10px;
-        }
-        .setting-button {
-            width: 100%;
-            background-color: #f44336;
-            color: white;
         }
     </style>
 </head>
 <body>
 
     <div class="menu">
-        <button class="button" onclick="showPage('calculate')">Рассчитать</button>
-        <button class="button" onclick="showPage('settings')">Настроить</button>
-        <button class="button" onclick="showPage('mySettings')">Мои настройки</button>
+        <button class="button" onclick="showCalculate()">Рассчитать</button>
+        <button class="button" onclick="showSettings()">Настроить</button>
+        <button class="button" onclick="showSavedSettings()">Мои настройки</button>
     </div>
 
-    <!-- Страница расчета -->
-    <div id="calculate" class="container">
+    <div class="container" id="calculate-container">
         <h2>Финансовый калькулятор</h2>
         <div class="input-group">
             <label class="input-label" for="income">Введите сумму дохода:</label>
@@ -102,162 +90,170 @@
         </div>
     </div>
 
-    <!-- Страница настроек -->
-    <div id="settings" class="container" style="display: none;">
-        <h2>Настройки распределения</h2>
+    <div class="container settings-container" id="settings-container">
+        <h2>Настройка распределения</h2>
+        <label for="setting-name">Название настройки:</label>
+        <input type="text" id="setting-name" class="input-field" placeholder="Название настройки">
         
-        <div id="basket-settings">
-            <!-- Здесь будут отображаться поля для ввода "корзин" -->
+        <div id="basket-container">
+            <div class="basket">
+                <input type="text" class="input-field basket-name" placeholder="Название корзины">
+                <input type="number" class="input-field basket-percentage" placeholder="Процент (%)">
+            </div>
         </div>
 
         <button class="button" onclick="addBasket()">Добавить корзину</button>
         <button class="button" onclick="saveSettings()">Сохранить настройки</button>
     </div>
 
-    <!-- Страница "Мои настройки" -->
-    <div id="mySettings" class="container" style="display: none;">
+    <div class="container settings-container" id="saved-settings-container">
         <h2>Мои настройки</h2>
-        <div id="saved-baskets">
-            <!-- Здесь будут отображаться сохраненные корзины -->
-        </div>
+        <div id="saved-settings"></div>
+        <button class="button" onclick="deleteSettings()">Удалить все настройки</button>
     </div>
 
     <script>
-        // Функция отображения страницы
-        function showPage(page) {
-            document.getElementById('calculate').style.display = (page === 'calculate') ? 'block' : 'none';
-            document.getElementById('settings').style.display = (page === 'settings') ? 'block' : 'none';
-            document.getElementById('mySettings').style.display = (page === 'mySettings') ? 'block' : 'none';
+        let settingsList = [];
+
+        function showCalculate() {
+            document.getElementById('calculate-container').style.display = 'block';
+            document.getElementById('settings-container').style.display = 'none';
+            document.getElementById('saved-settings-container').style.display = 'none';
         }
 
-        // Функция для добавления новой корзины
+        function showSettings() {
+            document.getElementById('calculate-container').style.display = 'none';
+            document.getElementById('settings-container').style.display = 'block';
+            document.getElementById('saved-settings-container').style.display = 'none';
+        }
+
+        function showSavedSettings() {
+            document.getElementById('calculate-container').style.display = 'none';
+            document.getElementById('settings-container').style.display = 'none';
+            document.getElementById('saved-settings-container').style.display = 'block';
+            displaySavedSettings();
+        }
+
         function addBasket() {
-            const container = document.getElementById('basket-settings');
-            const basketRow = document.createElement('div');
-            basketRow.classList.add('input-row');
-
-            basketRow.innerHTML = `
-                <input type="text" placeholder="Название корзины" class="input-field basket-name">
-                <input type="number" placeholder="Процент" class="input-field basket-percent" min="0" max="100">
-                <button class="button" onclick="removeBasket(this)">Удалить</button>
-                <button class="button" onclick="editBasket(this)">Редактировать</button>
+            let basketContainer = document.getElementById('basket-container');
+            let basketDiv = document.createElement('div');
+            basketDiv.classList.add('basket');
+            basketDiv.innerHTML = `
+                <input type="text" class="input-field basket-name" placeholder="Название корзины">
+                <input type="number" class="input-field basket-percentage" placeholder="Процент (%)">
             `;
-
-            container.appendChild(basketRow);
+            basketContainer.appendChild(basketDiv);
         }
 
-        // Функция для удаления корзины
-        function removeBasket(button) {
-            const row = button.parentElement;
-            row.remove();
-        }
-
-        // Функция для редактирования корзины
-        function editBasket(button) {
-            const row = button.parentElement;
-            const nameInput = row.querySelector('.basket-name');
-            const percentInput = row.querySelector('.basket-percent');
-            
-            if (button.textContent === "Редактировать") {
-                nameInput.disabled = false;
-                percentInput.disabled = false;
-                button.textContent = "Сохранить";
-            } else {
-                nameInput.disabled = true;
-                percentInput.disabled = true;
-                button.textContent = "Редактировать";
-            }
-        }
-
-        // Функция для сохранения настроек
         function saveSettings() {
-            const baskets = [];
-            const basketRows = document.querySelectorAll('.input-row');
+            let settingName = document.getElementById('setting-name').value;
+            if (!settingName) {
+                alert("Пожалуйста, укажите название настройки!");
+                return;
+            }
 
-            basketRows.forEach(row => {
-                const name = row.querySelector('.basket-name').value;
-                const percent = parseFloat(row.querySelector('.basket-percent').value);
-
-                if (name && !isNaN(percent) && percent > 0 && percent <= 100) {
-                    baskets.push({ name, percent });
+            let baskets = [];
+            let basketsElements = document.querySelectorAll('.basket');
+            basketsElements.forEach(basket => {
+                let basketName = basket.querySelector('.basket-name').value;
+                let basketPercentage = parseFloat(basket.querySelector('.basket-percentage').value);
+                if (basketName && !isNaN(basketPercentage)) {
+                    baskets.push({ name: basketName, percentage: basketPercentage });
                 }
             });
 
             if (baskets.length === 0) {
-                alert('Пожалуйста, добавьте хотя бы одну корзину с корректными данными!');
+                alert("Пожалуйста, добавьте хотя бы одну корзину!");
                 return;
             }
 
-            // Проверка, что сумма процентов не превышает 100%
-            const totalPercent = baskets.reduce((sum, basket) => sum + basket.percent, 0);
-            if (totalPercent !== 100) {
-                alert('Сумма процентов должна быть равна 100!');
-                return;
-            }
+            let settings = { name: settingName, baskets: baskets };
+            settingsList.push(settings);
+            localStorage.setItem('settingsList', JSON.stringify(settingsList));
 
-            // Сохраняем корзины в localStorage
-            localStorage.setItem('baskets', JSON.stringify(baskets));
-            alert('Настройки сохранены!');
+            alert("Настройки сохранены!");
+            document.getElementById('setting-name').value = '';
+            document.getElementById('basket-container').innerHTML = '';
         }
 
-        // Загрузка сохраненных корзин из localStorage при переходе на страницу "Мои настройки"
-        function loadMySettings() {
-            const savedBaskets = JSON.parse(localStorage.getItem('baskets')) || [];
-            const container = document.getElementById('saved-baskets');
+        function displaySavedSettings() {
+            let savedSettingsContainer = document.getElementById('saved-settings');
+            savedSettingsContainer.innerHTML = '';
 
-            if (savedBaskets.length === 0) {
-                container.innerHTML = '<p>У вас нет сохраненных настроек.</p>';
-                return;
-            }
-
-            savedBaskets.forEach((basket, index) => {
-                const basketRow = document.createElement('div');
-                basketRow.classList.add('input-row');
-                basketRow.innerHTML = `
-                    <div class="input-field" style="width: 90%;">${basket.name}: ${basket.percent}%</div>
-                    <button class="button setting-button" onclick="deleteBasket(${index})">Удалить</button>
+            let settingsFromLocalStorage = JSON.parse(localStorage.getItem('settingsList')) || [];
+            settingsFromLocalStorage.forEach(setting => {
+                let settingDiv = document.createElement('div');
+                settingDiv.classList.add('setting');
+                settingDiv.innerHTML = `
+                    <strong>${setting.name}</strong>
+                    <button class="button" onclick="editSetting('${setting.name}')">Изменить</button>
+                    <button class="button" onclick="deleteSetting('${setting.name}')">Удалить</button>
                 `;
-                container.appendChild(basketRow);
+                savedSettingsContainer.appendChild(settingDiv);
             });
         }
 
-        // Функция для удаления сохраненной корзины
-        function deleteBasket(index) {
-            const savedBaskets = JSON.parse(localStorage.getItem('baskets')) || [];
-            savedBaskets.splice(index, 1);
-            localStorage.setItem('baskets', JSON.stringify(savedBaskets));
-            loadMySettings(); // Перезагрузим настройки
+        function editSetting(settingName) {
+            let settingToEdit = settingsList.find(setting => setting.name === settingName);
+            document.getElementById('setting-name').value = settingToEdit.name;
+            let basketContainer = document.getElementById('basket-container');
+            basketContainer.innerHTML = '';
+
+            settingToEdit.baskets.forEach(basket => {
+                let basketDiv = document.createElement('div');
+                basketDiv.classList.add('basket');
+                basketDiv.innerHTML = `
+                    <input type="text" class="input-field basket-name" value="${basket.name}" placeholder="Название корзины">
+                    <input type="number" class="input-field basket-percentage" value="${basket.percentage}" placeholder="Процент (%)">
+                `;
+                basketContainer.appendChild(basketDiv);
+            });
+
+            document.getElementById('settings-container').style.display = 'block';
+            document.getElementById('saved-settings-container').style.display = 'none';
         }
 
-        // Функция для расчета распределения
+        function deleteSetting(settingName) {
+            settingsList = settingsList.filter(setting => setting.name !== settingName);
+            localStorage.setItem('settingsList', JSON.stringify(settingsList));
+            displaySavedSettings();
+        }
+
+        function deleteSettings() {
+            localStorage.removeItem('settingsList');
+            settingsList = [];
+            displaySavedSettings();
+        }
+
         function calculateDistribution() {
-            const income = parseFloat(document.getElementById('income').value);
+            let income = parseFloat(document.getElementById('income').value);
             if (isNaN(income)) {
                 alert("Введите корректную сумму!");
                 return;
             }
 
-            // Загружаем настройки корзин из localStorage
-            const baskets = JSON.parse(localStorage.getItem('baskets')) || [];
+            let selectedSettingName = prompt("Введите название настройки для расчета:");
+            let selectedSetting = settingsList.find(setting => setting.name === selectedSettingName);
 
-            if (baskets.length === 0) {
-                alert('Пожалуйста, настройте корзины перед расчетом!');
+            if (!selectedSetting) {
+                alert("Настройка не найдена!");
                 return;
             }
 
             let resultText = "Распределение дохода:\n\n";
-            baskets.forEach(basket => {
-                const amount = (income * basket.percent / 100).toFixed(2);
-                resultText += `${basket.name}: ${amount} руб.\n`;
+            selectedSetting.baskets.forEach(basket => {
+                let amount = income * (basket.percentage / 100);
+                resultText += `${basket.name}: ${amount.toFixed(2)} руб.\n`;
             });
 
             document.getElementById('result').textContent = resultText;
         }
 
-        // Загружаем "Мои настройки" при переходе на страницу "Мои настройки"
-        if (window.location.hash === '#mySettings') {
-            loadMySettings();
-        }
+        // Initialize settings list from localStorage on page load
+        window.onload = () => {
+            settingsList = JSON.parse(localStorage.getItem('settingsList')) || [];
+            displaySavedSettings();
+        };
     </script>
 
 </body>

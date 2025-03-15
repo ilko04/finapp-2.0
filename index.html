@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финансовый калькулятор</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Финансовый калькулятор">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-label, .result-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        .button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .menu {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .input-row input {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu">
+        <button class="button" onclick="showPage('calculate')">Рассчитать</button>
+        <button class="button" onclick="showPage('settings')">Настроить</button>
+    </div>
+
+    <!-- Страница расчета -->
+    <div id="calculate" class="container">
+        <h2>Финансовый калькулятор</h2>
+        <div class="input-group">
+            <label class="input-label" for="income">Введите сумму дохода:</label>
+            <input type="number" id="income" class="input-field" placeholder="Сумма дохода">
+        </div>
+
+        <button class="button" onclick="calculateDistribution()">Рассчитать</button>
+
+        <div class="result-group">
+            <label class="result-label">Распределение дохода:</label>
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Страница настроек -->
+    <div id="settings" class="container" style="display: none;">
+        <h2>Настройки распределения</h2>
+        
+        <div id="basket-settings">
+            <!-- Здесь будут отображаться поля для ввода "корзин" -->
+        </div>
+
+        <button class="button" onclick="addBasket()">Добавить корзину</button>
+        <button class="button" onclick="saveSettings()">Сохранить настройки</button>
+    </div>
+
+    <script>
+        // Функция отображения страницы
+        function showPage(page) {
+            document.getElementById('calculate').style.display = (page === 'calculate') ? 'block' : 'none';
+            document.getElementById('settings').style.display = (page === 'settings') ? 'block' : 'none';
+        }
+
+        // Функция для добавления новой корзины
+        function addBasket() {
+            const container = document.getElementById('basket-settings');
+            const basketRow = document.createElement('div');
+            basketRow.classList.add('input-row');
+
+            basketRow.innerHTML = `
+                <input type="text" placeholder="Название корзины" class="input-field basket-name">
+                <input type="number" placeholder="Процент" class="input-field basket-percent" min="0" max="100">
+                <button class="button" onclick="removeBasket(this)">Удалить</button>
+            `;
+
+            container.appendChild(basketRow);
+        }
+
+        // Функция для удаления корзины
+        function removeBasket(button) {
+            const row = button.parentElement;
+            row.remove();
+        }
+
+        // Функция для сохранения настроек
+        function saveSettings() {
+            const baskets = [];
+            const basketRows = document.querySelectorAll('.input-row');
+
+            basketRows.forEach(row => {
+                const name = row.querySelector('.basket-name').value;
+                const percent = parseFloat(row.querySelector('.basket-percent').value);
+
+                if (name && !isNaN(percent) && percent > 0 && percent <= 100) {
+                    baskets.push({ name, percent });
+                }
+            });
+
+            if (baskets.length === 0) {
+                alert('Пожалуйста, добавьте хотя бы одну корзину с корректными данными!');
+                return;
+            }
+
+            // Проверка, что сумма процентов не превышает 100%
+            const totalPercent = baskets.reduce((sum, basket) => sum + basket.percent, 0);
+            if (totalPercent !== 100) {
+                alert('Сумма процентов должна быть равна 100!');
+                return;
+            }
+
+            // Сохраняем корзины в localStorage
+            localStorage.setItem('baskets', JSON.stringify(baskets));
+            alert('Настройки сохранены!');
+        }
+
+        // Функция для расчета распределения
+        function calculateDistribution() {
+            const income = parseFloat(document.getElementById('income').value);
+            if (isNaN(income)) {
+                alert("Введите корректную сумму!");
+                return;
+            }
+
+            // Загружаем настройки корзин из localStorage
+            const baskets = JSON.parse(localStorage.getItem('baskets')) || [];
+
+            if (baskets.length === 0) {
+                alert('Пожалуйста, настройте корзины перед расчетом!');
+                return;
+            }
+
+            let resultText = "Распределение дохода:\n\n";
+            baskets.forEach(basket => {
+                const amount = (income * basket.percent / 100).toFixed(2);
+                resultText += `${basket.name}: ${amount} руб.\n`;
+            });
+
+            document.getElementById('result').textContent = resultText;
+        }
+    </script>
+
+</body>
+</html>

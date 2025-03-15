@@ -71,6 +71,11 @@
         .input-row button {
             margin-left: 10px;
         }
+        .setting-button {
+            width: 100%;
+            background-color: #f44336;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -78,6 +83,7 @@
     <div class="menu">
         <button class="button" onclick="showPage('calculate')">Рассчитать</button>
         <button class="button" onclick="showPage('settings')">Настроить</button>
+        <button class="button" onclick="showPage('mySettings')">Мои настройки</button>
     </div>
 
     <!-- Страница расчета -->
@@ -108,11 +114,20 @@
         <button class="button" onclick="saveSettings()">Сохранить настройки</button>
     </div>
 
+    <!-- Страница "Мои настройки" -->
+    <div id="mySettings" class="container" style="display: none;">
+        <h2>Мои настройки</h2>
+        <div id="saved-baskets">
+            <!-- Здесь будут отображаться сохраненные корзины -->
+        </div>
+    </div>
+
     <script>
         // Функция отображения страницы
         function showPage(page) {
             document.getElementById('calculate').style.display = (page === 'calculate') ? 'block' : 'none';
             document.getElementById('settings').style.display = (page === 'settings') ? 'block' : 'none';
+            document.getElementById('mySettings').style.display = (page === 'mySettings') ? 'block' : 'none';
         }
 
         // Функция для добавления новой корзины
@@ -185,22 +200,33 @@
             alert('Настройки сохранены!');
         }
 
-        // Загрузка сохраненных корзин из localStorage при переходе на страницу настроек
-        function loadSettings() {
+        // Загрузка сохраненных корзин из localStorage при переходе на страницу "Мои настройки"
+        function loadMySettings() {
             const savedBaskets = JSON.parse(localStorage.getItem('baskets')) || [];
-            const container = document.getElementById('basket-settings');
+            const container = document.getElementById('saved-baskets');
 
-            savedBaskets.forEach(basket => {
+            if (savedBaskets.length === 0) {
+                container.innerHTML = '<p>У вас нет сохраненных настроек.</p>';
+                return;
+            }
+
+            savedBaskets.forEach((basket, index) => {
                 const basketRow = document.createElement('div');
                 basketRow.classList.add('input-row');
                 basketRow.innerHTML = `
-                    <input type="text" placeholder="Название корзины" class="input-field basket-name" value="${basket.name}" disabled>
-                    <input type="number" placeholder="Процент" class="input-field basket-percent" value="${basket.percent}" disabled min="0" max="100">
-                    <button class="button" onclick="removeBasket(this)">Удалить</button>
-                    <button class="button" onclick="editBasket(this)">Редактировать</button>
+                    <div class="input-field" style="width: 90%;">${basket.name}: ${basket.percent}%</div>
+                    <button class="button setting-button" onclick="deleteBasket(${index})">Удалить</button>
                 `;
                 container.appendChild(basketRow);
             });
+        }
+
+        // Функция для удаления сохраненной корзины
+        function deleteBasket(index) {
+            const savedBaskets = JSON.parse(localStorage.getItem('baskets')) || [];
+            savedBaskets.splice(index, 1);
+            localStorage.setItem('baskets', JSON.stringify(savedBaskets));
+            loadMySettings(); // Перезагрузим настройки
         }
 
         // Функция для расчета распределения
@@ -228,9 +254,9 @@
             document.getElementById('result').textContent = resultText;
         }
 
-        // Загружаем настройки корзин при загрузке страницы настроек
-        if (window.location.hash === '#settings') {
-            loadSettings();
+        // Загружаем "Мои настройки" при переходе на страницу "Мои настройки"
+        if (window.location.hash === '#mySettings') {
+            loadMySettings();
         }
     </script>
 

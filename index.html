@@ -68,6 +68,9 @@
         .input-row input {
             width: 48%;
         }
+        .input-row button {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -122,6 +125,7 @@
                 <input type="text" placeholder="Название корзины" class="input-field basket-name">
                 <input type="number" placeholder="Процент" class="input-field basket-percent" min="0" max="100">
                 <button class="button" onclick="removeBasket(this)">Удалить</button>
+                <button class="button" onclick="editBasket(this)">Редактировать</button>
             `;
 
             container.appendChild(basketRow);
@@ -131,6 +135,23 @@
         function removeBasket(button) {
             const row = button.parentElement;
             row.remove();
+        }
+
+        // Функция для редактирования корзины
+        function editBasket(button) {
+            const row = button.parentElement;
+            const nameInput = row.querySelector('.basket-name');
+            const percentInput = row.querySelector('.basket-percent');
+            
+            if (button.textContent === "Редактировать") {
+                nameInput.disabled = false;
+                percentInput.disabled = false;
+                button.textContent = "Сохранить";
+            } else {
+                nameInput.disabled = true;
+                percentInput.disabled = true;
+                button.textContent = "Редактировать";
+            }
         }
 
         // Функция для сохранения настроек
@@ -164,6 +185,24 @@
             alert('Настройки сохранены!');
         }
 
+        // Загрузка сохраненных корзин из localStorage при переходе на страницу настроек
+        function loadSettings() {
+            const savedBaskets = JSON.parse(localStorage.getItem('baskets')) || [];
+            const container = document.getElementById('basket-settings');
+
+            savedBaskets.forEach(basket => {
+                const basketRow = document.createElement('div');
+                basketRow.classList.add('input-row');
+                basketRow.innerHTML = `
+                    <input type="text" placeholder="Название корзины" class="input-field basket-name" value="${basket.name}" disabled>
+                    <input type="number" placeholder="Процент" class="input-field basket-percent" value="${basket.percent}" disabled min="0" max="100">
+                    <button class="button" onclick="removeBasket(this)">Удалить</button>
+                    <button class="button" onclick="editBasket(this)">Редактировать</button>
+                `;
+                container.appendChild(basketRow);
+            });
+        }
+
         // Функция для расчета распределения
         function calculateDistribution() {
             const income = parseFloat(document.getElementById('income').value);
@@ -187,6 +226,11 @@
             });
 
             document.getElementById('result').textContent = resultText;
+        }
+
+        // Загружаем настройки корзин при загрузке страницы настроек
+        if (window.location.hash === '#settings') {
+            loadSettings();
         }
     </script>
 

@@ -12,9 +12,9 @@
     <link rel="manifest" href="manifest.json">
     <title>Финансовый калькулятор</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 20px; background-color: #f4f4f9; margin: 0; padding: 0; }
         .container { max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
-        .button { width: 100%; padding: 10px; margin-top: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        .button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
         .button:hover { background: #b8e0ba; }
         .menu { display: flex; justify-content: space-around; margin-bottom: 20px; }
         .hidden { display: none; }
@@ -23,16 +23,25 @@
     background: #333; /* Темный фон */
     color: white; /* Белый текст */
     text-align: center; /* Выравнивание по центру */
-    padding: 10px 0; /* Отступ сверху и снизу */
+    padding: 5px 0; /* Отступ сверху и снизу */
     position: fixed; /* Фиксированное положение */
     bottom: 0; /* Прижимаем к низу */
     width: 100%; /* На всю ширину */
+    height: 20px; /* Уменьшаем высоту футера */
+    font-size: 12px;
+    line-height: 1px; /* Выравниваем текст по центру */
+
 }
         input.button {
     background: white;
     color: black;
     border: 1px solid #ccc;
     padding: 5px;
+    font-size: 16px;
+}
+/* Добавляем место внизу для кнопки */
+#basket-container {
+    margin-bottom: 60px; /* Отступ, чтобы кнопка не перекрывалась футером */
 }
     </style>
 </head>

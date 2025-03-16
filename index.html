@@ -12,249 +12,137 @@
     <link rel="manifest" href="manifest.json">
     <title>Финансовый калькулятор</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .input-label, .result-label {
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .input-field {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-        .button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .result {
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-        .settings-container {
-            display: none;
-        }
-        .menu {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; }
+        .container { max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        .button { width: 100%; padding: 10px; margin-top: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        .button:hover { background: #b8e0ba; }
+        .menu { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .hidden { display: none; }
+        .buttonf {width: 100%; padding: 10px; margin-top: 10px; margin-bottom: 5px; background: opacity; border: 1px solid #ccc; cursor: pointer;}
+        .footer {
+    background: #333; /* Темный фон */
+    color: white; /* Белый текст */
+    text-align: center; /* Выравнивание по центру */
+    padding: 10px 0; /* Отступ сверху и снизу */
+    position: fixed; /* Фиксированное положение */
+    bottom: 0; /* Прижимаем к низу */
+    width: 100%; /* На всю ширину */
+}
+        input.button {
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+    padding: 5px;
+}
     </style>
 </head>
 <body>
-
     <div class="menu">
-        <button class="button" onclick="showCalculate()">Рассчитать</button>
-        <button class="button" onclick="showSettings()">Настроить</button>
-        <button class="button" onclick="showSavedSettings()">Мои настройки</button>
+        <button class="button" onclick="showScreen('calculate-container')">Рассчитать</button>
+        <button class="button" onclick="showScreen('settings-container')">Настроить</button>
+        <button class="button" onclick="showScreen('saved-settings-container')">Мои настройки</button>
     </div>
-
+    
     <div class="container" id="calculate-container">
         <h2>Финансовый калькулятор</h2>
-        <div class="input-group">
-            <label class="input-label" for="income">Введите сумму дохода:</label>
-            <input type="number" id="income" class="input-field" placeholder="Сумма дохода">
-        </div>
-
+        <label for="setting-select">Выберите настройку:</label>
+        <select id="setting-select" class="buttonf"></select>
+        <label for="income">Введите сумму дохода:</label>
+        <input type="number" id="income" class="button" placeholder="Сумма дохода">
         <button class="button" onclick="calculateDistribution()">Рассчитать</button>
-
-        <div class="result-group">
-            <label class="result-label">Распределение дохода:</label>
-            <div id="result" class="result"></div>
-        </div>
+        <div id="result"></div>
     </div>
-
-    <div class="container settings-container" id="settings-container">
+    
+    <div class="container hidden" id="settings-container">
+        <button class="button" onclick="showScreen('calculate-container')">Назад</button>
         <h2>Настройка распределения</h2>
-        <label for="setting-name">Название настройки:</label>
-        <input type="text" id="setting-name" class="input-field" placeholder="Название настройки">
-        
-        <div id="basket-container">
-            <div class="basket">
-                <input type="text" class="input-field basket-name" placeholder="Название корзины">
-                <input type="number" class="input-field basket-percentage" placeholder="Процент (%)">
-            </div>
-        </div>
-
+        <input type="text" id="setting-name" class="button" placeholder="Название настройки">
+        <div id="basket-container"></div>
         <button class="button" onclick="addBasket()">Добавить корзину</button>
         <button class="button" onclick="saveSettings()">Сохранить настройки</button>
     </div>
-
-    <div class="container settings-container" id="saved-settings-container">
+    
+    <div class="container hidden" id="saved-settings-container">
+        <button class="button" onclick="showScreen('calculate-container')">Назад</button>
         <h2>Мои настройки</h2>
         <div id="saved-settings"></div>
-        <button class="button" onclick="deleteSettings()">Удалить все настройки</button>
     </div>
 
+    <footer class="footer">
+    <p>&copy; 2025 Финансовый калькулятор. Все права защищены. by ilko04</p>
+</footer>
+    
     <script>
-        let settingsList = [];
-
-        function showCalculate() {
-            document.getElementById('calculate-container').style.display = 'block';
-            document.getElementById('settings-container').style.display = 'none';
-            document.getElementById('saved-settings-container').style.display = 'none';
+        let settingsList = JSON.parse(localStorage.getItem('settingsList')) || [];
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            if (screenId === 'saved-settings-container') displaySavedSettings();
+            if (screenId === 'calculate-container') updateSettingSelect();
         }
-
-        function showSettings() {
-            document.getElementById('calculate-container').style.display = 'none';
-            document.getElementById('settings-container').style.display = 'block';
-            document.getElementById('saved-settings-container').style.display = 'none';
+        
+        function updateSettingSelect() {
+            let select = document.getElementById('setting-select');
+            select.innerHTML = settingsList.map(setting => `<option value="${setting.name}">${setting.name}</option>`).join('');
         }
-
-        function showSavedSettings() {
-            document.getElementById('calculate-container').style.display = 'none';
-            document.getElementById('settings-container').style.display = 'none';
-            document.getElementById('saved-settings-container').style.display = 'block';
-            displaySavedSettings();
-        }
-
+        
         function addBasket() {
-            let basketContainer = document.getElementById('basket-container');
-            let basketDiv = document.createElement('div');
-            basketDiv.classList.add('basket');
-            basketDiv.innerHTML = `
-                <input type="text" class="input-field basket-name" placeholder="Название корзины">
-                <input type="number" class="input-field basket-percentage" placeholder="Процент (%)">
-            `;
-            basketContainer.appendChild(basketDiv);
+            let div = document.createElement('div');
+            div.innerHTML = `<input type="text" class="button basket-name" placeholder="Корзина"><input type="number" class="button basket-percentage" placeholder="%">`;
+            document.getElementById('basket-container').appendChild(div);
         }
-
+        
         function saveSettings() {
-            let settingName = document.getElementById('setting-name').value;
-            if (!settingName) {
-                alert("Пожалуйста, укажите название настройки!");
-                return;
-            }
-
-            let baskets = [];
-            let basketsElements = document.querySelectorAll('.basket');
-            basketsElements.forEach(basket => {
-                let basketName = basket.querySelector('.basket-name').value;
-                let basketPercentage = parseFloat(basket.querySelector('.basket-percentage').value);
-                if (basketName && !isNaN(basketPercentage)) {
-                    baskets.push({ name: basketName, percentage: basketPercentage });
-                }
-            });
-
-            if (baskets.length === 0) {
-                alert("Пожалуйста, добавьте хотя бы одну корзину!");
-                return;
-            }
-
-            let settings = { name: settingName, baskets: baskets };
-            settingsList.push(settings);
+            let name = document.getElementById('setting-name').value.trim();
+            let existingIndex = settingsList.findIndex(setting => setting.name === name);
+            let baskets = Array.from(document.querySelectorAll('.basket-name')).map((el, i) => ({
+                name: el.value, percentage: parseFloat(document.querySelectorAll('.basket-percentage')[i].value)
+            })).filter(b => b.name && !isNaN(b.percentage));
+            if (!name || baskets.length === 0) return alert('Заполните все поля');
+            if (existingIndex !== -1) settingsList[existingIndex] = { name, baskets };
+            else settingsList.push({ name, baskets });
             localStorage.setItem('settingsList', JSON.stringify(settingsList));
-
-            alert("Настройки сохранены!");
-            document.getElementById('setting-name').value = '';
-            document.getElementById('basket-container').innerHTML = '';
+            alert('Настройка сохранена');
         }
-
+        
         function displaySavedSettings() {
-            let savedSettingsContainer = document.getElementById('saved-settings');
-            savedSettingsContainer.innerHTML = '';
-
-            let settingsFromLocalStorage = JSON.parse(localStorage.getItem('settingsList')) || [];
-            settingsFromLocalStorage.forEach(setting => {
-                let settingDiv = document.createElement('div');
-                settingDiv.classList.add('setting');
-                settingDiv.innerHTML = `
+            let container = document.getElementById('saved-settings');
+            container.innerHTML = settingsList.map(setting => `
+                <div>
                     <strong>${setting.name}</strong>
                     <button class="button" onclick="editSetting('${setting.name}')">Изменить</button>
                     <button class="button" onclick="deleteSetting('${setting.name}')">Удалить</button>
-                `;
-                savedSettingsContainer.appendChild(settingDiv);
-            });
+                </div>`).join('');
         }
-
-        function editSetting(settingName) {
-            let settingToEdit = settingsList.find(setting => setting.name === settingName);
-            document.getElementById('setting-name').value = settingToEdit.name;
-            let basketContainer = document.getElementById('basket-container');
-            basketContainer.innerHTML = '';
-
-            settingToEdit.baskets.forEach(basket => {
-                let basketDiv = document.createElement('div');
-                basketDiv.classList.add('basket');
-                basketDiv.innerHTML = `
-                    <input type="text" class="input-field basket-name" value="${basket.name}" placeholder="Название корзины">
-                    <input type="number" class="input-field basket-percentage" value="${basket.percentage}" placeholder="Процент (%)">
-                `;
-                basketContainer.appendChild(basketDiv);
-            });
-
-            document.getElementById('settings-container').style.display = 'block';
-            document.getElementById('saved-settings-container').style.display = 'none';
+        
+        function editSetting(name) {
+            let setting = settingsList.find(s => s.name === name);
+            document.getElementById('setting-name').value = setting.name;
+            document.getElementById('basket-container').innerHTML = setting.baskets.map(b => `
+                <div>
+                    <input type="text" class="button basket-name" value="${b.name}">
+                    <input type="number" class="button basket-percentage" value="${b.percentage}">
+                </div>`).join('');
+            showScreen('settings-container');
         }
-
-        function deleteSetting(settingName) {
-            settingsList = settingsList.filter(setting => setting.name !== settingName);
+        
+        function deleteSetting(name) {
+            settingsList = settingsList.filter(s => s.name !== name);
             localStorage.setItem('settingsList', JSON.stringify(settingsList));
             displaySavedSettings();
         }
-
-        function deleteSettings() {
-            localStorage.removeItem('settingsList');
-            settingsList = [];
-            displaySavedSettings();
-        }
-
+        
         function calculateDistribution() {
             let income = parseFloat(document.getElementById('income').value);
-            if (isNaN(income)) {
-                alert("Введите корректную сумму!");
-                return;
-            }
-
-            let selectedSettingName = prompt("Введите название настройки для расчета:");
-            let selectedSetting = settingsList.find(setting => setting.name === selectedSettingName);
-
-            if (!selectedSetting) {
-                alert("Настройка не найдена!");
-                return;
-            }
-
-            let resultText = "Распределение дохода:\n\n";
-            selectedSetting.baskets.forEach(basket => {
-                let amount = income * (basket.percentage / 100);
-                resultText += `${basket.name}: ${amount.toFixed(2)} руб.\n`;
-            });
-
-            document.getElementById('result').textContent = resultText;
+            let settingName = document.getElementById('setting-select').value;
+            let setting = settingsList.find(s => s.name === settingName);
+            if (isNaN(income) || !setting) return alert('Выберите настройку и введите доход');
+            let result = setting.baskets.map(b => `${b.name}: ${(income * (b.percentage / 100)).toFixed(2)} руб.`).join('<br>');
+            document.getElementById('result').innerHTML = result;
         }
-
-        // Initialize settings list from localStorage on page load
-        window.onload = () => {
-            settingsList = JSON.parse(localStorage.getItem('settingsList')) || [];
-            displaySavedSettings();
-        };
+        
+        window.onload = updateSettingSelect;
     </script>
-
 </body>
 </html>
